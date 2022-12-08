@@ -66,3 +66,7 @@ yarn run package:mac:x64
 ```
 yarn lint
 ```
+
+## 问题反馈：
+- QQ  : `2478719169`
+- 微信 : `lyeaxm`
