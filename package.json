@@ -21,9 +21,11 @@
   "main": "background.js",
   "dependencies": {
     "@serialport/bindings-cpp": "^10.8.0",
+    "@vicons/ionicons5": "^0.12.0",
     "clipboard": "^2.0.11",
     "core-js": "^3.8.3",
     "dayjs": "^1.11.6",
+    "highlight.js": "^11.7.0",
     "iconv-lite": "^0.6.3",
     "vue": "^3.2.13",
     "vue-resize-observer": "^2.0.16"
@@ -32,6 +34,7 @@
     "@babel/core": "^7.12.16",
     "@babel/eslint-parser": "^7.12.16",
     "@serialport/bindings-interface": "^1.2.2",
+    "@vicons/antd": "^0.12.0",
     "@vicons/fluent": "^0.12.0",
     "@vicons/utils": "^0.1.4",
     "@vue/cli-plugin-babel": "~5.0.0",

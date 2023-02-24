@@ -1,47 +1,49 @@
 <template>
   <n-config-provider :theme-overrides="configs.theme==='dark'?darkThemeOverrides:lightThemeOverrides"
-                     :theme="configs.theme==='dark'?darkTheme:lightTheme">
+                     :theme="configs.theme==='dark'?darkTheme:lightTheme" :hljs="hljs">
     <div class="drag-app"></div>
-    <n-tabs type="segment" v-model="configs.tabActive">
-      <n-tab-pane name="chap1" tab="串口" display-directive="show">
-        <HelloWorld/>
-      </n-tab-pane>
-      <n-tab-pane name="chap2" tab="示波器" display-directive="show:lazy">
-        <other-ability></other-ability>
-      </n-tab-pane>
-      <n-tab-pane name="chap3" tab="设置" display-directive="show:lazy">
-        <n-list>
-          <n-list-item>
-            <n-thing title="外观" description="浅色模式/深色模式/跟随系统"></n-thing>
-            <template #suffix>
-              <div style="width: 300px;display: flex;justify-content: flex-end">
-                <n-space>
+    <n-dialog-provider>
+      <n-tabs type="segment" v-model="configs.tabActive">
+        <n-tab-pane name="chap1" tab="串口" display-directive="show">
+          <HelloWorld/>
+        </n-tab-pane>
+        <n-tab-pane name="chap2" tab="示波器" display-directive="show:lazy">
+          <OtherAbility></OtherAbility>
+        </n-tab-pane>
+        <n-tab-pane name="chap3" tab="设置" display-directive="show:lazy">
+          <n-list>
+            <n-list-item>
+              <n-thing title="外观" description="浅色模式/深色模式/跟随系统"></n-thing>
+              <template #suffix>
+                <div style="width: 300px;display: flex;justify-content: flex-end">
                   <n-space>
-                    <n-radio-group v-model:value="configs.themeMode" name="theme"
-                                   @change="themeChange(configs.themeMode)" v-show="configs.themeMode!=='system'">
-                      <n-space>
-                        <n-radio value="light">浅色</n-radio>
-                        <n-radio value="dark">深色</n-radio>
-                      </n-space>
-                    </n-radio-group>
+                    <n-space>
+                      <n-radio-group v-model:value="configs.themeMode" name="theme"
+                                     @change="themeChange(configs.themeMode)" v-show="configs.themeMode!=='system'">
+                        <n-space>
+                          <n-radio value="light">浅色</n-radio>
+                          <n-radio value="dark">深色</n-radio>
+                        </n-space>
+                      </n-radio-group>
+                    </n-space>
+                    <n-space>
+                      <div>跟随系统</div>
+                      <n-switch v-model="configs.themeMode" :value="configs.themeMode" checked-value="system"
+                                unchecked-value="custom"
+                                @update:value="themeChange"></n-switch>
+                    </n-space>
                   </n-space>
-                  <n-space>
-                    <div>跟随系统</div>
-                    <n-switch v-model="configs.themeMode" :value="configs.themeMode" checked-value="system"
-                              unchecked-value="custom"
-                              @update:value="themeChange"></n-switch>
-                  </n-space>
-                </n-space>
-              </div>
-            </template>
-          </n-list-item>
-          <n-list-item>
-            <n-thing title="其它" description="敬请期待"></n-thing>
-            <template #suffix>None</template>
-          </n-list-item>
-        </n-list>
-      </n-tab-pane>
-    </n-tabs>
+                </div>
+              </template>
+            </n-list-item>
+            <n-list-item>
+              <n-thing title="其它" description="敬请期待"></n-thing>
+              <template #suffix>None</template>
+            </n-list-item>
+          </n-list>
+        </n-tab-pane>
+      </n-tabs>
+    </n-dialog-provider>
   </n-config-provider>
 </template>
 
@@ -59,12 +61,17 @@ import {
   NTabPane,
   NTabs,
   NThing,
-  createDiscreteApi
+  createDiscreteApi,
+  NDialogProvider
 } from 'naive-ui'
 import HelloWorld from './components/HelloWorld.vue'
 import OtherAbility from './components/OtherAbility.vue'
 import {computed, reactive} from 'vue';
 import {ipcRenderer} from 'electron';
+import hljs from 'highlight.js/lib/core'
+import c from 'highlight.js/lib/languages/c'
+
+hljs.registerLanguage('c', c)
 
 
 const lightThemeOverrides = {

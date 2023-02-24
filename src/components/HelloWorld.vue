@@ -1,5 +1,4 @@
 <template>
-
   <div class="container" style="display: flex">
     <div class="page-lift">
       <div>
@@ -32,6 +31,61 @@
             </n-button>
           </div>
         </n-form>
+      </div>
+      <div>
+        <n-upload
+            action="https://naive-upload.free.beeceptor.com/"
+            multiple
+            directory-dnd
+            :max="1"
+            :default-upload="false"
+            ref="uploadRef"
+            v-model:file-list="fileListRef"
+            :custom-request="customRequest"
+            @before-upload="beforeUpdate"
+            @change="handleUploadChange"
+            @remove="handleUploadRemove"
+        >
+          <n-upload-dragger>
+            <div style="margin-bottom: 12px;padding: 10px;">
+              <n-icon size="48" :depth="3">
+                <Icon>
+                  <UploadOutlined/>
+                </Icon>
+              </n-icon>
+            </div>
+            <n-text style="font-size: 14px">
+              点击或者拖动文件到该区域来上传
+            </n-text>
+          </n-upload-dragger>
+        </n-upload>
+        <div style="width: 100%;text-align: center"
+             v-if="['uploading','finished'].includes((fileListRef[0]||{}).status)">
+          <n-gradient-text type="info" size="12">
+            {{ (fileListRef[0] || {}).numOfUploaded }}
+          </n-gradient-text>
+          /
+          <n-gradient-text type="success" size="12">
+            {{ (fileListRef[0] || {}).data.byteLength }}
+          </n-gradient-text>
+        </div>
+        <div style="width: 100%;text-align: center;margin-top: 10px">
+          <n-button
+              text
+              tag="a"
+              target="_blank"
+              type="primary"
+              @click="helpUse=true"
+          >
+            使用说明
+          </n-button>
+        </div>
+        <n-button type="primary" style="margin-top: 20px;width: 100%" ghost
+                  v-show="(fileListRef[0]||{}).status==='pending'"
+                  :disabled="!settings.serialPortOpened||!fileListRef.length"
+                  @click="callUpload">
+          开始上传
+        </n-button>
       </div>
     </div>
     <div class="page-right">
@@ -163,10 +217,10 @@
             <div style="display: flex;gap: 6px">
               <div>结尾</div>
               <n-switch v-model:value="settings.endAppend.enable"
-                        @change="()=>{if(!settings.endAppend.enable)message.warning('在使用C语言的scanf函数时，关闭结尾换行符可能会导致scanf一直阻塞！⚠️⚠️⚠️');}"
                         @update:value="()=>{
                           if(settings.endAppend.enable) settings.endAppend.wrap = settings.endAppend.wrap || '\n';
                           else settings.endAppend.wrap = null;
+                          if(!settings.endAppend.enable)message.warning('在使用C语言的scanf函数时，关闭结尾换行符可能会导致scanf一直阻塞！⚠️⚠️⚠️');
                         }"></n-switch>
             </div>
             <n-select :placeholder="settings.endAppendOptions[2].label" :options="settings.endAppendOptions"
@@ -178,6 +232,37 @@
         </div>
       </div>
     </div>
+
+
+    <n-modal v-model:show="helpUse" preset="dialog"
+             title="使用说明"
+             style="width: 800px;"
+             negative-text="关 闭">
+      <h1 style="text-align: center">串口文件传输使用说明</h1>
+      <n-alert type="info">
+        由于在学习LCD显示UTF8中文时，单片机 FLASH 中的字库在之前被误删了，百度了很久还是找不到一个简单方便的方法，所以自己写了一个。
+      </n-alert>
+      <n-alert type="warning" style="margin-top: 10px">
+        如果长时间进度卡在一个地方，可能是因为数据校验失败导致进入了死循环
+      </n-alert>
+      <h2>
+        串口文件传输之前需要在单片机的增加一些代码来配合
+      </h2>
+      <div style="font-size: 18px;margin: 10px 0">以下是一个示例，和您的串口/SPI/FLASH的配置/函数名可能有些不同，替换成对应功能的函数即可</div>
+      <n-card title="main.c">
+        <template #header-extra>
+          <n-popover>
+            <template #trigger>
+              <n-icon size="16" style="cursor: pointer;" class="active-green" @click="copyTransferCode(transferMatchCode)">
+                <copy-outline/>
+              </n-icon>
+            </template>
+            <span>复制代码</span>
+          </n-popover>
+        </template>
+        <n-code word-wrap :code="transferMatchCode" language="c" show-line-numbers/>
+      </n-card>
+    </n-modal>
   </div>
 
 </template>
@@ -185,31 +270,43 @@
 <script setup>
 import {computed, nextTick, onBeforeMount, onBeforeUnmount, reactive, ref, watch} from 'vue'
 import {
-  NSelect,
-  NForm,
-  NFormItem,
   NButton,
   NCheckbox,
-  NSlider,
-  NSpace,
-  NRadioGroup,
-  NRadioButton,
-  NScrollbar,
+  NForm,
+  NFormItem,
+  NIcon,
   NInput,
   NInputNumber,
-  NSwitch,
-  NPopover,
   NList,
-  NListItem
+  NListItem,
+  NPopover,
+  NRadioButton,
+  NRadioGroup,
+  NScrollbar,
+  NSelect,
+  NSlider,
+  NSpace,
+  NSwitch,
+  NText,
+  NUpload,
+  NUploadDragger,
+  NGradientText,
+  NModal,
+  NCard,
+  NCode,
+  NAlert
 } from 'naive-ui';
+import {UploadOutlined} from '@vicons/antd';
+import {CopyOutline} from '@vicons/ionicons5'
+import {Icon} from '@vicons/utils'
 import dayjs from 'dayjs';
 import iconv from 'iconv-lite'
-import {clipboard, ipcRenderer} from 'electron';
+import {clipboard} from 'electron';
+import {autoDetect} from '@serialport/bindings-cpp' //这就是Node-SerialPort与底层系统通信的方式。默认情况下，我们会自动检测Windows，Linux和OSX（大多数地方都调用OSX），并为您的系统加载适当的模块。
 
 // eslint-disable-next-line no-unused-vars
 const message = window.$message;
 
-import {autoDetect} from '@serialport/bindings-cpp' //这就是Node-SerialPort与底层系统通信的方式。默认情况下，我们会自动检测Windows，Linux和OSX（大多数地方都调用OSX），并为您的系统加载适当的模块。
 const Binding = autoDetect();// 返回自动返回对应平台的初始化接口:  DarwinBindingInterface | WindowsBindingInterface | LinuxBindingInterface
 
 const settings = reactive({
@@ -279,6 +376,229 @@ const communications = reactive({
   }
 })
 
+const transferMatchCode = `
+#include "stm32f4xx.h"
+#include "bsp_debug_usart.h"
+#include "bsp_spi_flash.h"
+
+void receiveFile();
+
+int main(void) {
+    // 初始化 串口
+    DEBUG_USART_Config();
+    // 初始化 SPI FLASH
+    SPI_FLASH_Init();
+    // 接收数据
+    receiveFile();
+}
+
+
+/**
+ * 保存文件的起始地址
+ */
+static uint32_t addr = 0x00000000;
+
+
+void checkSave(const uint8_t *buff, uint16_t len) {
+    uint8_t buffer[1024];
+    SPI_FLASH_BufferRead(buffer, addr, len);
+    for (int i = 0; i < len; ++i) {
+        if (buffer[i] != buff[i]) {
+            while(1);
+        }
+    }
+}
+
+/**
+ * 保存缓冲区数据
+ * @param buff 缓冲区数据
+ * @param len 缓冲区数据长度
+ */
+void doSave(uint8_t *buff, uint16_t len) {
+    if ((addr % 4096) == 0) {
+        SPI_FLASH_SectorErase(addr);
+    }
+    SPI_FLASH_BufferWrite(buff, addr, len);
+    checkSave(buff, len);
+    addr += len;
+}
+
+/**
+ * 传输完毕，并且保存成功后执行
+ *
+ * 可以在此验证数据是否已经正确地保存到FLASH
+ */
+void afterSave() {
+    uint8_t buffer[1024] = {0};
+    uint16_t count = addr / 1024;
+    uint16_t numOfSingle = addr % 1024;
+    for (uint16_t i = 0; i < count; ++i) {
+        SPI_FLASH_BufferRead(buffer, i * 1024, 1024);
+    }
+    SPI_FLASH_BufferRead(buffer, count * 1024, numOfSingle);
+    printf("%s", buffer);
+}
+
+/**
+ * 接收串口文件传输
+ */
+void receiveFile() {
+    uint8_t buff[1024] = {0};
+    uint16_t len = 0;
+    uint8_t data;
+
+    // 协议建立
+    uint8_t flag = 1;
+    for (uint8_t i = 0; i < 10; ++i) {
+        if (Usart_GetData() != 0xAA) {
+            flag = 0;
+        }
+        Usart_SendByte(DEBUG_USART, 0xAA);
+    }
+    if (flag == 0) {
+        return;
+    }
+
+    // 协议建立成功！开始传输...
+    flag = 0;
+    uint8_t tmp_buff[10] = {0};
+    uint8_t end_cmd[10] = {0x11, 0x33, 0x11, 0x44, 0x55, 0x22, 0x00, 0x99, 0x99, 0x99};
+    while (1) {
+        data = Usart_GetData();
+
+        /**
+         * 接收到全部结束指令 ，表示已经传输完毕
+         * 接收到结束指令的其中一个，暂时不存入缓冲区，直到接收到 全部结束指令 或 结束指令的其中一个
+         */
+        if (data == end_cmd[flag]) {
+            // 存入临时缓冲区
+            tmp_buff[flag] = data;
+            flag++;
+            if (flag == 10) {
+                // 传输完毕
+                doSave(buff, len);
+                afterSave();
+                break;
+            }
+        } else {
+            // 如果临时缓冲区长度不为0，将临时缓冲区内容存入正常缓冲区
+            if (flag != 0) {
+                tmp_buff[flag] = data;
+                flag++;
+            } else {
+                // 为了方便统一操作，所以把正常数据也存入缓冲区
+                tmp_buff[0] = data;
+                flag = 1;
+            }
+
+            for (uint8_t i = 0; i < flag; i++) {
+                buff[len] = tmp_buff[i];
+                len++;
+                if (len == 1024) {
+                    // buffer is filled
+                    doSave(buff, len);
+                    len = 0;
+                }
+            }
+            flag = 0;
+        }
+        // 为确保传输不出现漏传等问题，返回任意一个响应字符，SSCOM 收到响应才会接着下一个数据
+        printf("x");
+    }
+}
+`;
+
+const uploadRef = ref(0);
+const fileListRef = ref([])
+const helpUse = ref(false);
+
+const callUpload = () => {
+  uploadRef.value?.submit();
+}
+
+const customRequest = async (options) => {
+  const file = fileListRef.value[0];
+  const data = (fileListRef.value[0] || {}).data
+  if (!data) {
+    message.warning('请先选择文件再上传');
+  }
+  await closeSerialPort();
+  await openSerialPort(false);
+
+  const startCmd = [0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA];
+  const endCmd = [0x11, 0x33, 0x11, 0x44, 0x55, 0x22, 0x00, 0x99, 0x99, 0x99];
+  const buff = Buffer.alloc(32, 0, "binary");
+
+  let timeout = setTimeout(async () => {
+    message.error('建立连接超时！请查看使用说明')
+    await closeSerialPort();
+    await openSerialPort(true);
+  }, 300);
+  // 连接
+  for (let i = 0; i < startCmd.length; i++) {
+    await port.write(Buffer.of(startCmd[i]));
+    const {buffer} = await port.read(buff, 0, 1);
+    console.log(buffer);
+    if (buffer[0] !== startCmd[i]) {
+      message.error('建立连接失败！请查看使用说明');
+      readData().then();
+      return;
+    }
+  }
+  clearTimeout(timeout);
+
+
+  // 传输
+  file.percentage = 0;
+  file.status = 'uploading';
+  console.log('文件大小：', data.byteLength);
+  for (let i = 0; i < data.byteLength; i++) {
+    //取消传输
+    if (!fileListRef.value[0]) {
+      break;
+    }
+    await port.write(Buffer.of(data.getUint8(i)));
+    await port.read(buff, 0, 32);
+    file.numOfUploaded = i + 1;
+    file.percentage = Math.ceil((file.numOfUploaded / data.byteLength) * 100)
+  }
+
+  // 完成
+  for (let i = 0; i < endCmd.length; i++) {
+    await port.write(Buffer.of(endCmd[i]));
+    await port.read(buff, 0, 32);
+  }
+  file.status = 'finished';
+
+  // 继续监听
+  await port.flush();
+  readData().then();
+}
+
+const handleUploadChange = (data) => {
+  fileListRef.value = data.fileList
+}
+const handleUploadRemove = ({file}) => {
+  return true;
+}
+
+const beforeUpdate = (options) => {
+  return new Promise((resolve, reject) => {
+    const fileReader = new FileReader();
+    fileReader.onload = async res => {
+      const data = new DataView(res.target.result);
+      if (data.byteLength === 0) {
+        message.warning('文件内容不能为空');
+        resolve(false);
+        return;
+      }
+      resolve(true);
+      options.file.data = data;
+    }
+    fileReader.readAsArrayBuffer(options.file.file);
+  })
+};
+
 
 const openSerialPortAllow = computed(() => {
   const {serialPort, baudRate, parity, stopBits, dataBits} = settings;
@@ -315,7 +635,7 @@ let port = undefined;
  * vmin !=0 , vtime !=0 : 读到 vmin 个数据，或者从进入 read 后读第一个数据 vtime 时间，任一满足返回，单位为s。没有数据会阻塞。
  * vmin =0  , vtime !=0 : 读不到数据，read 阻塞 vtime 时间返回
  */
-const openSerialPort = async () => {
+const openSerialPort = async (readEnable = true) => {
   if (settings.serialPortOpened) return closeSerialPort();
   try {
     port = await Binding.open({
@@ -338,17 +658,6 @@ const openSerialPort = async () => {
     return;
   }
 
-  /**
-   * 在加入这一行代码之前，遇到了一个问题，用了我非常多的时间都没有解决，在网上查了很久之后 终于找到一个和我问题一样的问题：
-   *
-   * "当第一次程序下载进入开发板后正常工作，按reset正常复位，此时无论是否使用串口助手打开com口开发板都不受影响，正常工作。
-   * 关闭所有软件，开发板断电重新上电后，打开串口调试助手不打开串口，此时按reset开发板正常工作；
-   * 然后打开串口，只要按reset单片机就跑死，此时重新下载程序改变不了，进行Debug仿真程序不知道跑到哪里去了，只要关闭串口，按reset就可以恢复正常，芯片正常工作；
-   * 更换串口助手，换成正点原子开发的串口助手，便没有已上问题。"，
-   *
-   * 评论区看到一个评论："貌似是串口助手启动时导致系统进行了复位，需要切换一下DTR状态程序才可以继续一直执行循环。"
-   * 接着我再看了一下文档，可以设置这个标志位，设置了之后，一切都正常了！
-   */
   port.set({dtr: false});
 
   if (!port.isOpen) {
@@ -358,7 +667,7 @@ const openSerialPort = async () => {
     return;
   }
   settings.serialPortOpened = true;
-  readData().then();
+  if (readEnable) readData().then();
 }
 
 const closeSerialPort = async () => {
@@ -367,41 +676,59 @@ const closeSerialPort = async () => {
   settings.serialPortOpened = false;
 }
 
+let readImmediateId = undefined;
 const readData = async () => {
   let data;
-  const buff = Buffer.alloc(32, 0, 'binary');
+  const buff = Buffer.alloc(32, 0, "binary");
   let index = communications.receive.length ? communications.receive.length - 1 : 0;
+
   // eslint-disable-next-line no-constant-condition
-  while (settings.serialPortOpened) {
+  const readImmediate = async () => {
     try {
       let {buffer, bytesRead} = await port.read(buff, 0, 32);
-      if (communications.receive.length === 0 ||
+      // console.log(buffer);
+      // 如果没有接收到过数据，或者上一次接收的数据是发送的，或者上一次接收的数据已经超过1s，则新建一个接收记录
+      if (
+          communications.receive.length === 0 ||
           communications.receive[communications.receive.length - 1].isSend ||
-          (communications.receive[communications.receive.length - 1].datetime < (new Date().getTime() - /*1000*/ 1000))) {
+          communications.receive[communications.receive.length - 1].datetime <
+          new Date().getTime() - 1000
+      ) {
         index = communications.receive.length;
         data = Buffer.from(buffer.slice(0, bytesRead));
         communications.receive[index] = {
           datetime: new Date().getTime(),
           data: data,
-          ...convertBinary(data)
+          ...convertBinary(data),
         };
       } else {
         // 间隔少于1s
-        data = Buffer.concat([communications.receive[index].data, buffer.slice(0, bytesRead)]);
+        data = Buffer.concat([
+          communications.receive[index].data,
+          buffer.slice(0, bytesRead),
+        ]);
         communications.receive[index] = {
           datetime: communications.receive[index].datetime,
           data: data,
-          ...convertBinary(data)
-        }
+          ...convertBinary(data),
+        };
       }
-
     } catch (e) {
-      console.log('readData------->>>', e)
+      console.log("readData------->>>", e);
+      clearImmediate(readImmediateId);
+      readImmediateId = undefined;
       await closeSerialPort();
-      break;
+      return;
+    }
+    // 继续执行setImmediate
+    if (readImmediateId) {
+      readImmediateId = setImmediate(readImmediate);
     }
   }
+  // 开始执行setImmediate
+  readImmediateId = setImmediate(readImmediate);
 };
+
 
 const convertBinary = (data) => {
   return {
@@ -581,6 +908,13 @@ const copy = (text) => {
   clickHex(false);
 }
 
+
+const copyTransferCode=(code)=>{
+  clipboard.writeText(code);
+  message.success('复制成功');
+  helpUse.value = false;
+}
+
 const rememberSettings = () => {
   const {
     serialPort,       // 串口
@@ -749,5 +1083,9 @@ onBeforeUnmount(async () => {
 .receive-data {
   font-family: monospace;
   white-space: pre-wrap;
+}
+
+.active-green:active{
+  color: #7fe7c4;
 }
 </style>
