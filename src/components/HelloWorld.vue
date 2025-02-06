@@ -313,7 +313,7 @@ const settings = reactive({
   derives: [],
   BaudRateOptions: [
     300, 1200, 2400, 4800, 9600, 14400, 19200, 28800,
-    38400, 57600, 74880, 115200, 230400,
+    38400, 57600, 74880, 115200, 230400,460800,921600
   ].map(v => ({label: v, value: v})),
   parityOptions: [
     {label: 'None(无)', value: 'Node'},
@@ -856,9 +856,9 @@ const writeData = async () => {
     case 'HEX':
       data = Buffer.from(iconv.encode(communications.send.text, "HEX"));
       if (!data.length) return message.error('您输入的好像不是 HEX 。。。😨');
-      if (communications.send.text.split('').some(v => (v < '1' || v > '9') && (v < 'A' || v > 'F'))) {
-        message.warning('您可能输入了 HEX 中，但不全是 HEX 。。。😥');
-      }
+      // if (communications.send.text.split('').some(v => (v < '1' || v > '9') && (v < 'A' || v > 'F'))) {
+      //   message.warning('您可能输入了 HEX 中，但不全是 HEX 。。。😥');
+      // }
       break;
     case 'ASCII':
       data = Buffer.from(iconv.encode(communications.send.text, "ASCII"));
@@ -873,6 +873,8 @@ const writeData = async () => {
   //结尾
   if (settings.endAppend.enable) {
     sendData = Buffer.concat([data, Buffer.from(settings.endAppend.wrap)]);
+  }else {
+    sendData = data;
   }
   try {
     await port.write(sendData);
