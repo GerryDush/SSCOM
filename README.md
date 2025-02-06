@@ -18,11 +18,8 @@ macOS 的串口调试助手，有开源的，也有免费的，但都多多少�
 - ⭐️ 支持 行号实时显示
 - ✨ 支持 点击 HEX 显示对应的 `二进制` / `八进制` / `十进制`
 
-## 计划
-- 软件示波器
-- TCP/UDP 网络调试、WebSocket 调试
-- 还没想到...
-- Swift 重写
+## 2023-02-25 增加文件传输功能
+[![ppSkCU1.jpg](https://s1.ax1x.com/2023/02/25/ppSkCU1.jpg)](https://imgse.com/i/ppSkCU1)
 
 ## 目前效果
 ![zRm1KS.png](https://s1.ax1x.com/2022/12/09/zRm1KS.png)
