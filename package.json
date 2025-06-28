@@ -1,77 +1,34 @@
 {
-  "name": "sscom",
-  "version": "0.0.8",
-  "private": false,
-  "description": "serial port debug tools",
-  "author": "liu_yupei@foxmail.com",
-  "license": "GPL",
-  "repository": "https://github.com/GerryDush/SSCOM.git",
+  "name": "serial-report-tauri",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
   "scripts": {
-    "lint": "vue-cli-service lint",
-    "postinstall": "electron-builder install-app-deps",
-    "postuninstall": "electron-builder install-app-deps",
-    "electron:serve:native": "vue-cli-service electron:serve",
-    "electron:build:native": "vue-cli-service electron:build",
-    "package:mac:x64": "vue-cli-service electron:build --publish never --mac --x64",
-    "package:mac:arm64": "vue-cli-service electron:build --publish never --mac --arm64",
-    "package:linux": "vue-cli-service electron:build --publish never --linux",
-    "package:win:x64": "vue-cli-service electron:build --publish never --win --x64",
-    "package:win:arm64": "vue-cli-service electron:build --publish never --win --arm64"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tauri": "tauri"
   },
-  "main": "background.js",
   "dependencies": {
-    "@serialport/bindings-cpp": "^10.8.0",
-    "@vicons/ionicons5": "^0.12.0",
-    "clipboard": "^2.0.11",
-    "core-js": "^3.8.3",
-    "dayjs": "^1.11.6",
-    "highlight.js": "^11.7.0",
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-clipboard-manager": "~2.3.0",
+    "@tauri-apps/plugin-http": "~2.5.0",
+    "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-os": "~2.3.0",
+    "@vicons/antd": "^0.13.0",
+    "@vicons/fluent": "^0.13.0",
+    "@vicons/ionicons5": "^0.13.0",
+    "@vicons/utils": "^0.1.4",
+    "dayjs": "^1.11.13",
+    "highlight.js": "^11.11.1",
     "iconv-lite": "^0.6.3",
-    "vue": "^3.2.13",
-    "vue-resize-observer": "^2.0.16"
+    "tauri-plugin-serialplugin": "^2.12.1",
+    "vue": "^3.5.13"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.16",
-    "@babel/eslint-parser": "^7.12.16",
-    "@serialport/bindings-interface": "^1.2.2",
-    "@vicons/antd": "^0.12.0",
-    "@vicons/fluent": "^0.12.0",
-    "@vicons/utils": "^0.1.4",
-    "@vue/cli-plugin-babel": "~5.0.0",
-    "@vue/cli-plugin-eslint": "~5.0.0",
-    "@vue/cli-service": "~5.0.0",
-    "electron": "^13.0.0",
-    "electron-builder": "^23.0.2",
-    "electron-devtools-installer": "^3.1.0",
-    "eslint": "^7.32.0",
-    "eslint-plugin-vue": "^8.0.3",
-    "naive-ui": "^2.34.2",
-    "vfonts": "^0.0.3",
-    "vue-cli-plugin-electron-builder": "~2.1.1"
-  },
-  "overrides": {
-    "vue-cli-plugin-electron-builder": {
-      "electron-builder": "^23.0.3"
-    }
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/vue3-essential",
-      "eslint:recommended"
-    ],
-    "parserOptions": {
-      "parser": "@babel/eslint-parser"
-    },
-    "rules": {}
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead",
-    "not ie 11"
-  ]
+    "@tauri-apps/cli": "^2",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "naive-ui": "^2.42.0",
+    "vite": "^6.0.3"
+  }
 }
