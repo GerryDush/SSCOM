@@ -1,8 +1,4 @@
-import {createApp} from 'vue'
-import App from './App.vue'
-import VueResizeObserver from "vue-resize-observer";
+import { createApp } from "vue";
+import App from "./App.vue";
 
-createApp({
-    directives: {'resize': VueResizeObserver},
-})
-createApp(App).mount('#app')
+createApp(App).mount("#app");
