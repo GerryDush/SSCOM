@@ -17,10 +17,14 @@
 
 ---
 
+## 📷 预览截图
+
 ![screenshot-mac-dark](./doc/images/mac-dark.png)
 ![screenshot-win-dark](./doc/images/win-dark.jpg)
 ![screenshot-mac-light](./doc/images/mac-light.png)
 ![screenshot-win-light](./doc/images/win-light.png)
+
+---
 
 ## 🖥 技术栈
 
@@ -29,14 +33,6 @@
 - 💎 UI 库：[Naive UI](https://www.naiveui.com/)
 - 🎨 主题管理：系统主题感知 + 自定义切换
 - 📦 打包发布：支持 macOS / Windows / Linux 构建
-
----
-
-## 📷 预览截图
-
-| 暗色模式 | 亮色模式（即将提供） |
-|----------|------------------------|
-| ![dark](./assets/screenshot-dark.png) | _TODO_ |
 
 ---
 
